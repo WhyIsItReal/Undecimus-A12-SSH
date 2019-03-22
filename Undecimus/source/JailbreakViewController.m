@@ -807,9 +807,7 @@ void jailbreak()
         _assert(ISADDR(GETOFFSET(x)), message, true); \
         SETOFFSET(x, GETOFFSET(x) + kernel_slide); \
 } while (false)
-        if (!auth_ptrs) {
-            PF(trustcache);
-        }
+        PF(trustcache);
         PF(OSBoolean_True);
         PF(osunserializexml);
         PF(smalloc);
@@ -829,9 +827,11 @@ void jailbreak()
             PF(fs_lookup_snapshot_metadata_by_name_and_return_name);
             PF(apfs_jhash_getvnode);
         }
+        PF(pmap_load_trust_cache);
+        if (GETOFFSET(pmap_load_trust_cache)) {
+            pmap_load_trust_cache = _pmap_load_trust_cache;
+        }
         if (auth_ptrs) {
-            PF(pmap_load_trust_cache);
-            PF(pmap_loaded_trust_caches);
             PF(paciza_pointer__l2tp_domain_module_start);
             PF(paciza_pointer__l2tp_domain_module_stop);
             PF(l2tp_domain_inited);
@@ -1324,11 +1324,7 @@ void jailbreak()
                 const char *systemSnapshotLaunchdPath = [@(systemSnapshotMountPoint) stringByAppendingPathComponent:@"sbin/launchd"].UTF8String;
                 _assert(waitForFile(systemSnapshotLaunchdPath) == ERR_SUCCESS, message, true);
                 _assert(extractDebsForPkg(@"rsync", nil, false), message, true);
-#if __arm64e__
-                _assert(injectTrustCache(@[@"/usr/bin/rsync"], GETOFFSET(pmap_loaded_trust_caches), _pmap_load_trust_cache) == ERR_SUCCESS, message, true);
-#else
-                _assert(injectTrustCache(@[@"/usr/bin/rsync"], GETOFFSET(trustcache)) == ERR_SUCCESS, message, true);
-#endif
+                _assert(injectTrustCache(@[@"/usr/bin/rsync"], GETOFFSET(trustcache), pmap_load_trust_cache) == ERR_SUCCESS, message, true);
                 _assert(runCommand("/usr/bin/rsync", "-vaxcH", "--progress", "--delete-after", "--exclude=/Developer", [@(systemSnapshotMountPoint) stringByAppendingPathComponent:@"."].UTF8String, "/", NULL) == 0, message, true);
                 unmount(systemSnapshotMountPoint, MNT_FORCE);
             } else {
@@ -1504,11 +1500,7 @@ void jailbreak()
             resources = [@[@"/usr/libexec/substrate"] arrayByAddingObjectsFromArray:resources];
         }
         resources = [@[@"/usr/libexec/substrated"] arrayByAddingObjectsFromArray:resources];
-#if __arm64e__
-        _assert(injectTrustCache(resources, GETOFFSET(pmap_loaded_trust_caches), _pmap_load_trust_cache) == ERR_SUCCESS, message, true);
-#else
-        _assert(injectTrustCache(resources, GETOFFSET(trustcache)) == ERR_SUCCESS, message, true);
-#endif
+        _assert(injectTrustCache(resources, GETOFFSET(trustcache), pmap_load_trust_cache) == ERR_SUCCESS, message, true);
         LOG("Successfully injected trust cache.");
         INSERTSTATUS(NSLocalizedString(@"Injected trust cache.\n", nil));
     }
