@@ -1475,7 +1475,7 @@ void jailbreak()
     
     UPSTAGE();
     
-    if (sshOnly) {
+    if (sshOnly || auth_ptrs) {
         LOG("Enabling SSH...");
         SETMESSAGE(NSLocalizedString(@"Failed to enable SSH.", nil));
         NSMutableArray *toInject = [NSMutableArray new];
